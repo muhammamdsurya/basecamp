@@ -685,6 +685,9 @@ $detail = query("SELECT * FROM lapangan WHERE id = $id")[0];
                 const price = $(this).data('price');
                 const diskon = $(this).data('diskon');
                 const total = $(this).data('total');
+                const priceMember= $(this).data('price-member');
+                const diskonMember = $(this).data('diskon-member');
+                const totalMember = $(this).data('total-member');
                 const status = $(this).data('status');
 
                 console.log("Date from Button:", date);
@@ -704,7 +707,10 @@ $detail = query("SELECT * FROM lapangan WHERE id = $id")[0];
                         endTime,
                         price,
                         diskon,
-                        total
+                        total,
+                        priceMember,
+                        diskonMember,
+                        totalMember
                     });
                 }
 
@@ -723,6 +729,9 @@ $detail = query("SELECT * FROM lapangan WHERE id = $id")[0];
             $('#pesan').on('click', function() {
                 event.stopPropagation(); // Mencegah event bubbling
 
+                console.log(selectedTimes);
+                
+
                 // Check if there are no selected dates or times
                 if (!selectedDates || selectedDates.length === 0 || selectedTimes.length === 0) {
                     // Use SweetAlert to display the error message
@@ -737,7 +746,9 @@ $detail = query("SELECT * FROM lapangan WHERE id = $id")[0];
                 const catatan = $('#catatan').val();
 
                 // Calculate total price
-                let totalPrice = calculatePrice();
+                let totalPrice = calculateHargaAwal();
+                let totalPriceFinal = calculatePrice();
+                let totalDiscount = calculateDiskon();
 
                 const today = new Date();
                 const yyyy = today.getFullYear();
@@ -765,54 +776,22 @@ $detail = query("SELECT * FROM lapangan WHERE id = $id")[0];
                         // Create and append cells
                         row.append($('<td></td>').text(formatDate(date))); // Date
                         row.append($('<td></td>').text(`${time.startTime} - ${time.endTime}`)); // Time range
-                        row.append($('<td></td>').text(`${formatRupiah(time.price)}`)); // Price
-                        row.append($('<td></td>').text(`${time.diskon} %`)); // Default diskon 0, will be updated if needed
-                        row.append($('<td></td>').text(`${formatRupiah(time.total)}`)); // Total
+                        row.append($('<td></td>').text(`${formatRupiah(selectedTimes.length >= 4?time.priceMember: time.price)}`)); // Price
+                        row.append($('<td></td>').text(`${selectedTimes.length >= 4?time.diskonMember: time.diskon} %`)); // Default diskon 0, will be updated if needed
+                        row.append($('<td></td>').text(`${formatRupiah(selectedTimes.length >= 4?time.totalMember: time.total)}`)); // Total
 
 
                         jamMainContainer.append(row); // Append row to the table
                     });
                 });
                 $('#bayarModal #totalAwal').val(`${formatRupiah(totalPrice)}`);
+                $('#bayarModal #total').val(`${formatRupiah(totalPriceFinal)}`); 
+                    $('#bayarModal #diskon_member').val(`${formatRupiah(totalDiscount)}`); 
                 // Cek jumlah tanggal yang dipilih, jika kurang dari 4, diskon tidak akan diterapkan
-                if (selectedDates.length < 4) {
-                    // Tidak ada diskon
-                    $('#bayarModal #diskon_member').val('Minimal booking 4'); // Atur diskon jadi 0
-                    $('#bayarModal #total').val(`${formatRupiah(totalPrice)}`); // Set total price tanpa diskon
-                } else {
-
-                    // AJAX request to fetch diskon
-                    $.ajax({
-                        url: 'controller/getDiskon.php',
-                        type: 'GET',
-                        data: {
-                            id: id
-                        },
-                        dataType: 'json',
-                        success: function(response) {
-                            if (response.success) {
-                                const diskon = response.diskon;
-
-                                // Update diskon in the modal
-                                $('#bayarModal #diskon_member').val(formatRupiah(diskon));
-
-                                // Calculate the total price after applying the discount
-
-                                totalPrice -= diskon;
-
-                                // Update the total price in the modal
-                                $('#bayarModal #total').val(`${formatRupiah(totalPrice)}`);
-
-                            } else {
-                                console.error('Failed to fetch discount:', response.message);
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('AJAX Error:', status, error);
-                            console.error('Response Text:', xhr.responseText);
-                        }
-                    });
-                }
+                // if (selectedTimes.length < 4) {
+                //     // Tidak ada diskon
+                //     $('#bayarModal #diskon_member').val('Minimal booking 4'); // Atur diskon jadi 0
+                // } 
 
                 // Show the modal after everything is set
                 $('#bayarModal').modal('show');
@@ -1001,6 +980,9 @@ $detail = query("SELECT * FROM lapangan WHERE id = $id")[0];
                             price: timeSlot.harga,
                             diskon: timeSlot.diskon,
                             total: timeSlot.total,
+                            priceMember: timeSlot.harga_member,
+                            diskonMember: timeSlot.diskon_member,
+                            totalMember: timeSlot.total_member,
 
                         });
                     } else if ((startHourInt >= 17 && startHourInt < 22) || (endHourInt >= 17 && endHourInt <= 22)) {
@@ -1011,6 +993,9 @@ $detail = query("SELECT * FROM lapangan WHERE id = $id")[0];
                             price: timeSlot.harga,
                             diskon: timeSlot.diskon,
                             total: timeSlot.total,
+                            priceMember: timeSlot.harga_member,
+                            diskonMember: timeSlot.diskon_member,
+                            totalMember: timeSlot.total_member,
                         });
                     }
                 });
@@ -1031,7 +1016,10 @@ $detail = query("SELECT * FROM lapangan WHERE id = $id")[0];
                         'data-end-time': timeSlot.endTime,
                         'data-price': timeSlot.price,
                         'data-diskon': timeSlot.diskon,
-                        'data-total': timeSlot.total
+                        'data-total': timeSlot.total,
+                        'data-price-member': timeSlot.priceMember,
+                        'data-diskon-member': timeSlot.diskonMember,
+                        'data-total-member': timeSlot.totalMember
                     });
 
 
@@ -1048,8 +1036,33 @@ $detail = query("SELECT * FROM lapangan WHERE id = $id")[0];
 
 
             function calculatePrice() {
+                
                 // Total price is calculated by summing up the price of each selected time slot
-                const totalPrice = selectedTimes.reduce((total, slot) => total + slot.total || 0, 0);
+                var totalPrice = selectedTimes.reduce((total, slot) => total + slot.total || 0, 0);
+
+                if(selectedTimes.length >= 4){
+                     totalPrice = selectedTimes.reduce((totalMember, slot) => totalMember + slot.totalMember || 0, 0);
+                }
+                return totalPrice;
+            }
+            function calculateHargaAwal() {
+                
+                // Total price is calculated by summing up the price of each selected time slot
+                var totalPrice = selectedTimes.reduce((price, slot) => price + slot.price || 0, 0);
+
+                if(selectedTimes.length >= 4){
+                     totalPrice = selectedTimes.reduce((priceMember, slot) => priceMember + slot.priceMember || 0, 0);
+                }
+                return totalPrice;
+            }
+            function calculateDiskon() {
+                
+                // Total price is calculated by summing up the price of each selected time slot
+                var totalPrice = selectedTimes.reduce((total, slot) => total + ( slot.price - slot.total || 0), 0);
+
+                if(selectedTimes.length >= 4){
+                    totalPrice = selectedTimes.reduce((total, slot) => total + ( slot.priceMember - slot.totalMember || 0), 0);
+                }
                 return totalPrice;
             }
 
@@ -1093,9 +1106,9 @@ $detail = query("SELECT * FROM lapangan WHERE id = $id")[0];
                         formData.append(`selected_times[${timeIndex}][selectedDates][${dateIndex}]`, date);
                         formData.append(`selected_times[${timeIndex}][startTime]`, slot.startTime);
                         formData.append(`selected_times[${timeIndex}][endTime]`, slot.endTime);
-                        formData.append(`selected_times[${timeIndex}][price]`, slot.price);
-                        formData.append(`selected_times[${timeIndex}][diskon]`, slot.diskon);
-                        formData.append(`selected_times[${timeIndex}][total]`, slot.total);
+                        formData.append(`selected_times[${timeIndex}][price]`, selectedTimes.length >= 4? slot.priceMember:slot.price);
+                        formData.append(`selected_times[${timeIndex}][diskon]`, selectedTimes.length >= 4?slot.diskonMember: slot.diskon);
+                        formData.append(`selected_times[${timeIndex}][total]`, selectedTimes.length >= 4?slot.totalMember:slot.total);
                     });
                 });
 

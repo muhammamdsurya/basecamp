@@ -39,7 +39,7 @@ $query = "SELECT available_times.tanggal, available_times.start_time, available_
 FROM available_times 
 JOIN lapangan ON available_times.lapangan_id = lapangan.id
 LEFT JOIN normal_price ON available_times.id = normal_price.times_id
-LEFT JOIN member_price ON available_times.id = normal_price.times_id
+LEFT JOIN member_price ON available_times.id = member_price.times_id
 WHERE available_times.tanggal = ? AND available_times.status = 'available' AND available_times.lapangan_id = ? GROUP BY available_times.id;
 ";
 $stmt = $conn->prepare($query);

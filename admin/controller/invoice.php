@@ -18,11 +18,39 @@ $bookingData = $result1->fetch_assoc(); // Fetch data for booking
 
 $stmt1->close(); // Close the first statement
 
-// Query 2: Fetch booking times and additional info
-$stmt2 = $conn->prepare("
-    SELECT booking_times.tanggal, booking_times.start_time, booking_times.end_time, available_times.harga, available_times.diskon, available_times.total AS available_total FROM bookings JOIN lapangan ON bookings.lapangan_id = lapangan.id LEFT JOIN booking_times ON bookings.id = booking_times.booking_id LEFT JOIN available_times ON booking_times.lapangan_id = available_times.lapangan_id AND booking_times.tanggal = available_times.tanggal AND booking_times.start_time = available_times.start_time AND booking_times.end_time = available_times.end_time WHERE bookings.id = ?;
 
-");
+$countQry= "
+SELECT COUNT(*) AS count 
+FROM booking_times 
+WHERE booking_times.booking_id = ".$id.";
+";
+
+$resultCount = mysqli_query($conn, $countQry);
+$rowCount = mysqli_fetch_assoc($resultCount);
+
+    $count = $rowCount['count']; 
+
+    // Query 2: Fetch booking times and additional info
+        $stmt2 = $conn->prepare("
+        SELECT booking_times.tanggal, booking_times.start_time, booking_times.end_time, normal_price.harga, normal_price.diskon, normal_price.total AS available_total FROM bookings JOIN lapangan ON bookings.lapangan_id = lapangan.id LEFT JOIN booking_times ON bookings.id = booking_times.booking_id LEFT JOIN available_times ON booking_times.lapangan_id = available_times.lapangan_id AND booking_times.tanggal = available_times.tanggal AND booking_times.start_time = available_times.start_time AND booking_times.end_time = available_times.end_time LEFT JOIN normal_price ON available_times.id = normal_price.times_id WHERE bookings.id = ?;
+
+        ");
+
+
+    if($count >= 4){
+        $stmt2 = $conn->prepare("
+        SELECT booking_times.tanggal, booking_times.start_time, booking_times.end_time, member_price.harga, member_price.diskon, member_price.total AS available_total FROM bookings JOIN lapangan ON bookings.lapangan_id = lapangan.id LEFT JOIN booking_times ON bookings.id = booking_times.booking_id LEFT JOIN available_times ON booking_times.lapangan_id = available_times.lapangan_id AND booking_times.tanggal = available_times.tanggal AND booking_times.start_time = available_times.start_time AND booking_times.end_time = available_times.end_time LEFT JOIN member_price ON available_times.id = member_price.times_id WHERE bookings.id = ?;
+    
+    ");
+    }
+    
+
+
+
+
+
+
+
 $stmt2->bind_param("i", $id);
 $stmt2->execute();
 $result2 = $stmt2->get_result();
