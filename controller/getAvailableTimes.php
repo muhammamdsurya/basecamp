@@ -35,10 +35,12 @@ if (empty($dates)) {
 $latestDate = max($dates);
 
 // Query to get available times for the specified date
-$query = "SELECT available_times.tanggal, available_times.start_time, available_times.end_time, available_times.harga, available_times.diskon, available_times.total, available_times.status, lapangan.diskon AS lapangan_diskon 
+$query = "SELECT available_times.tanggal, available_times.start_time, available_times.end_time, available_times.status, lapangan.diskon AS lapangan_diskon,  normal_price.harga as harga, normal_price.diskon as diskon, normal_price.total as total, member_price.harga as harga_member, member_price.diskon as diskon_member, member_price.total as total_member
 FROM available_times 
 JOIN lapangan ON available_times.lapangan_id = lapangan.id
-WHERE available_times.tanggal = ? AND available_times.status = 'available' AND available_times.lapangan_id = ?;
+LEFT JOIN normal_price ON available_times.id = normal_price.times_id
+LEFT JOIN member_price ON available_times.id = normal_price.times_id
+WHERE available_times.tanggal = ? AND available_times.status = 'available' AND available_times.lapangan_id = ? GROUP BY available_times.id;
 ";
 $stmt = $conn->prepare($query);
 $stmt->bind_param('si', $latestDate, $id);

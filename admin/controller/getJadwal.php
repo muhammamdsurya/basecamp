@@ -1,5 +1,6 @@
 <?php
 require '../../functions.php'; // Ensure this file sets up your database connection
+require_once 'PriceController.php';
 header('Content-Type: application/json');
 
 // Check request method
@@ -14,6 +15,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
         $data = [];
         while ($row = $result->fetch_assoc()) {
+
+            $times_id = $row['id']; // Assuming available_times has a times_id column
+            
+            // Fetch harga from normal_price
+            $priceQuery = "SELECT * FROM normal_price WHERE times_id = ?";
+            if ($priceStmt = $conn->prepare($priceQuery)) {
+                $priceStmt->bind_param('i', $times_id); 
+                $priceStmt->execute();
+                $priceResult = $priceStmt->get_result();
+                
+                if ($priceRow = $priceResult->fetch_assoc()) {
+                    $row['normal'] = $priceRow; 
+                } else {
+                    $row['normal'] = null; 
+                }
+                
+                $priceStmt->close();
+            } else {
+                $row['normal'] = null;
+            }
+            // Fetch harga from member_price
+            $priceQuery = "SELECT * FROM member_price WHERE times_id = ?";
+            if ($priceStmt = $conn->prepare($priceQuery)) {
+                $priceStmt->bind_param('i', $times_id); 
+                $priceStmt->execute();
+                $priceResult = $priceStmt->get_result();
+                
+                if ($priceRow = $priceResult->fetch_assoc()) {
+                    $row['member'] = $priceRow; 
+                } else {
+                    $row['member'] = null; 
+                }
+                
+                $priceStmt->close();
+            } else {
+                $row['member'] = null;
+            }
+
             $data[] = $row;
         }
         $stmt->close();
@@ -34,13 +73,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // Validate and extract input
     $lapangan_id = $input['id'] ?? '';
     $date = $input['date'] ?? '';
-    $harga = $input['harga'] ?? '';
     $start_time = $input['start_time'] ?? '';
     $end_time = $input['end_time'] ?? '';
+    $harga = $input['harga'] ?? '';
     $diskon = $input['diskon'] ?? '';
     $total = $input['total'] ?? '';
+    $hargaMember = $input['hargaMember'] ?? '';
+    $diskonMember = $input['diskonMember'] ?? '';
+    $totalMember = $input['totalMember'] ?? '';
 
-    if (empty($lapangan_id) || empty($date) || empty($harga) || empty($start_time) || empty($end_time) || empty($diskon)) {
+    if (empty($lapangan_id) || empty($date) || empty($harga) || empty($start_time) || empty($end_time) || empty($diskon)|| empty($hargaMember) || empty($diskonMember) || empty($totalMember)) {
         echo json_encode(['success' => false, 'message' => 'All fields are required.']);
         exit;
     }
@@ -63,12 +105,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         exit;
     }
 
+
     // Prepare and execute SQL statement
-    $insertQuery = 'INSERT INTO available_times (lapangan_id, tanggal, harga, start_time, end_time, diskon, total ) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    $insertQuery = 'INSERT INTO available_times (lapangan_id, tanggal, start_time, end_time ) VALUES (?, ?, ?, ?)';
     if ($stmt = $conn->prepare($insertQuery)) {
-        $stmt->bind_param('sssssii', $lapangan_id, $date, $harga, $start_time, $end_time, $diskon, $total);
+        $stmt->bind_param('ssss', $lapangan_id, $date, $start_time, $end_time);
         if ($stmt->execute()) {
-            echo json_encode(['success' => true]);
+            // JIKA BERHASIL 
+            $timesId = $conn->insert_id;
+
+            //INSERT WAKTUNYA
+            $insertMember = new PriceController($conn);
+
+            if ($insertMember->insertPrice($timesId, $harga, $diskon, $total, $hargaMember, $diskonMember, $totalMember) ) {
+                echo json_encode(['success' => true]);
+            } else {
+                //HAPUS TIMES JIKA GAGAL INSERT HARGA
+                $deleteQuery = 'DELETE FROM available_times WHERE id = ?';
+                if ($deleteStmt = $conn->prepare($deleteQuery)) {
+                    $deleteStmt->bind_param('i', $timesId);
+                    $deleteStmt->execute();
+                    $deleteStmt->close();
+                }
+                echo json_encode(['success' => false, 'message' => 'Failed to prepare statement: ' . $conn->error]);
+            }
+            //END DARI INSERT WAKTU
+
+
+
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to add data: ' . $stmt->error]);
         }

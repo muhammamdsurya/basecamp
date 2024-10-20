@@ -267,6 +267,28 @@ $jadwal = query("SELECT * FROM available_times");
                     <div class="row">
                       <div class="col">
                         <div class="mb-3">
+                          <label for="hargaInput<?= $row['id']; ?>" class="form-label">Harga Member</label>
+                          <input type="number" name="hargaMember" class="form-control" id="hargaMemberInput<?= $row['id']; ?>">
+                        </div>
+                      </div>
+                      <div class="col">
+                        <div class="mb-3">
+                          <label for="hargaInput<?= $row['id']; ?>" class="form-label">Diskon Member</label>
+                          <input type="number" name="diskonMember" class="form-control" id="diskonMemberInput<?= $row['id']; ?>" >
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col">
+                        <div class="mb-3">
+                          <label for="hargaInput<?= $row['id']; ?>" class="form-label">Total Member</label>
+                          <input type="number" name="totalMember" class="form-control" id="totalMemberInput<?= $row['id']; ?>" readonly>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col">
+                        <div class="mb-3">
                           <label for="startTimeInput<?= $row['id']; ?>" class="form-label">Mulai</label>
                           <input type="time" name="start_time" class="form-control" id="startTimeInput<?= $row['id']; ?>">
                         </div>
@@ -291,6 +313,9 @@ $jadwal = query("SELECT * FROM available_times");
                             <th scope="col">Harga</th>
                             <th scope="col">Diskon</th>
                             <th scope="col">Total</th>
+                            <th scope="col">Harga Member</th>
+                            <th scope="col">Diskon Member</th>
+                            <th scope="col">Total Member</th>
                             <th scope="col">Action</th>
                           </tr>
                         </thead>
@@ -707,16 +732,20 @@ $jadwal = query("SELECT * FROM available_times");
             // Ambil elemen berdasarkan lapangan_id untuk menghitung total
             const harga = $(`${formId} #hargaInput${lapangan_id}`).val() || 0;
             const diskon = $(`${formId} #diskonInput${lapangan_id}`).val() || 0;
+            const hargaMember = $(`${formId} #hargaMemberInput${lapangan_id}`).val() || 0;
+            const diskonMember = $(`${formId} #diskonMemberInput${lapangan_id}`).val() || 0;
 
             // Kalkulasi total dengan diskon
             const total = harga - (harga * (diskon / 100));
+            const totalMember = hargaMember - (hargaMember * (diskonMember / 100));
 
             // Set hasil total ke input total
             $(`${formId} #totalInput${lapangan_id}`).val(total);
+            $(`${formId} #totalMemberInput${lapangan_id}`).val(totalMember);
           }
 
           // Bind event 'input' pada input harga dan diskon untuk form yang sesuai
-          $(`#hargaInput${lapangan_id}, #diskonInput${lapangan_id}`).on('input', calculateTotal);
+          $(`#hargaInput${lapangan_id}, #diskonInput${lapangan_id}, #hargaMemberInput${lapangan_id}, #diskonMemberInput${lapangan_id}`).on('input', calculateTotal);
 
 
           // Fetch and populate table data based on lapangan_id
@@ -736,6 +765,9 @@ $jadwal = query("SELECT * FROM available_times");
           const hargaInput = $(`${formId} #hargaInput${lapangan_id}`).val();
           const diskonInput = $(`${formId} #diskonInput${lapangan_id}`).val();
           const totalInput = $(`${formId} #totalInput${lapangan_id}`).val();
+          const hargaMemberInput = $(`${formId} #hargaMemberInput${lapangan_id}`).val();
+          const diskonMemberInput = $(`${formId} #diskonMemberInput${lapangan_id}`).val();
+          const totalMemberInput = $(`${formId} #totalMemberInput${lapangan_id}`).val();
 
           const date = new Date(dateInput);
           const formattedDate = date.toISOString().split('T')[0];
@@ -744,11 +776,14 @@ $jadwal = query("SELECT * FROM available_times");
           const formData = {
             id: lapangan_id,
             date: formattedDate,
-            harga: hargaInput, // Assuming harga is a number; no need to format
             start_time: startTimeInput,
             end_time: endTimeInput,
+            harga: hargaInput, // Assuming harga is a number; no need to format
             diskon: diskonInput,
-            total: totalInput // Assuming total is a number; no need to format
+            total: totalInput, // Assuming total is a number; no need to format
+            hargaMember: hargaMemberInput, // Assuming harga is a number; no need to format
+            diskonMember: diskonMemberInput,
+            totalMember: totalMemberInput // Assuming total is a number; no need to format
           };
 
           $.ajax({
@@ -804,21 +839,28 @@ $jadwal = query("SELECT * FROM available_times");
             },
             dataType: 'json',
             success: function(response) {
+              console.log(response);
+              
               let tableContent = '';
               const tableBody = $(`#jadwalTable${lapangan_id} tbody`);
 
               const table = $(`#jadwalTable${lapangan_id}`);
               if (response.success) {
                 const jadwal = response.data || [];
+                console.log(jadwal);
+                
 
                 jadwal.forEach(row => {
                   const newRow = `
               <tr>
                 <td>${formatDate(row.tanggal)}</td>
                 <td>${row.start_time} - ${row.end_time}</td>
-                <td>${formatRupiah(row.harga)}</td>
-                <td>${row.diskon} %</td>
-                <td>${formatRupiah(row.total)}</td>
+                <td>${formatRupiah(row.normal.harga)}</td>
+                <td>${row.normal.diskon} %</td>
+                <td>${formatRupiah(row.normal.total)}</td>
+                <td>${formatRupiah(row.member.harga)}</td>
+                <td>${row.member.diskon} %</td>
+                <td>${formatRupiah(row.member.total)}</td>
 <td><button class="btn btn-danger btn-sm" data-lapangan="${row.lapangan_id}" data-id="${row.id}" onclick="removeRow(this)">Hapus</button></td>
               </tr>
             `;
