@@ -725,6 +725,8 @@ $lapangan = query("SELECT id, name FROM lapangan");
             type: 'GET',
             dataType: 'json',
             success: function(response) {
+              console.log(response);
+              
               let tableContent = '';
               const tableBody = $('#lapanganTable tbody'); // Replace with your table's ID
 
@@ -824,8 +826,8 @@ $lapangan = query("SELECT id, name FROM lapangan");
               }
             },
             error: function(xhr, status, error) {
-              console.error('Error:', error);
-              console.error('Text:', xhr.responseText);
+              console.log(xhr);
+              console.error('AJAX Error:', status, error);
             }
           });
         }
@@ -894,6 +896,8 @@ $lapangan = query("SELECT id, name FROM lapangan");
 
             },
             error: function(xhr, status, error) {
+              console.log(xhr);
+              
               console.error('AJAX Error:', status, error);
               Swal.fire({
                 title: 'Error',

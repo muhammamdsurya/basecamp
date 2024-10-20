@@ -7,9 +7,18 @@ if ($role !== 'Admin') {
   header("location:/login.php");
 }
 
-$member = query("SELECT available_times.*, lapangan.name AS lapangan_name
+$member = query("SELECT available_times.*, lapangan.name AS lapangan_name,
+ normal_price.harga AS harga_normal,
+ normal_price.diskon AS diskon_normal,
+ normal_price.total AS total_normal,
+ member_price.harga AS harga_member,
+ member_price.diskon AS diskon_member,
+ member_price.total AS total_member
 FROM available_times
-JOIN lapangan ON available_times.lapangan_id = lapangan.id");
+JOIN lapangan ON available_times.lapangan_id = lapangan.id
+LEFT JOIN normal_price normal_price ON available_times.id = normal_price.times_id
+LEFT JOIN member_price ON available_times.id = member_price.times_id;
+");
 
 ?>
 <!DOCTYPE html>
@@ -112,6 +121,9 @@ JOIN lapangan ON available_times.lapangan_id = lapangan.id");
                 <th scope="col">Harga</th>
                 <th scope="col">Diskon</th>
                 <th scope="col">Total</th>
+                <th scope="col">Harga Member</th>
+                <th scope="col">Diskon Member</th>
+                <th scope="col">Total Member</th>
                 <th scope="col">Status </th>
               </tr>
             </thead>
@@ -122,9 +134,12 @@ JOIN lapangan ON available_times.lapangan_id = lapangan.id");
                     <td><?= date('d-m-Y', strtotime($row["tanggal"])); ?></td> <!-- Format tanggal -->
                     <td><?= htmlspecialchars($row["lapangan_name"]); ?></td>
                     <td><?= htmlspecialchars($row["start_time"]); ?> - <?= htmlspecialchars($row["end_time"]); ?></td>
-                    <td><?= 'Rp ' . number_format($row["harga"], 0, ',', '.'); ?></td> <!-- Format harga -->
-                    <td><?= htmlspecialchars($row["diskon"]); ?> %</td>
-                    <td><?= 'Rp ' . number_format($row["total"], 0, ',', '.'); ?></td> <!-- Format harga -->
+                    <td><?= 'Rp ' . number_format($row["harga_normal"], 0, ',', '.'); ?></td> <!-- Format harga -->
+                    <td><?= htmlspecialchars($row["diskon_normal"]); ?> %</td>
+                    <td><?= 'Rp ' . number_format($row["total_normal"], 0, ',', '.'); ?></td> <!-- Format harga -->
+                    <td><?= 'Rp ' . number_format($row["harga_member"], 0, ',', '.'); ?></td> <!-- Format harga -->
+                    <td><?= htmlspecialchars($row["diskon_member"]); ?> %</td>
+                    <td><?= 'Rp ' . number_format($row["total_member"], 0, ',', '.'); ?></td> <!-- Format harga -->
                     <td><?= htmlspecialchars($row["status"]); ?></td>
                   </tr>
                 <?php endforeach; ?>

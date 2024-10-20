@@ -6,15 +6,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
     $booking_id = $_GET['id'] ?? '';
 
-    // Query to get available pesanan for the specified date
+
+
+    $countQry= "
+    SELECT COUNT(*) AS count 
+    FROM booking_times 
+    WHERE booking_times.booking_id = ".$booking_id.";
+    ";
+
+    $resultCount = mysqli_query($conn, $countQry);
+    $rowCount = mysqli_fetch_assoc($resultCount);
+
+    $count = $rowCount['count']; 
+
+    $table = "normal_price";
+    if($count >= 4){
+        $table = "member_price";
+    }
+
+
+
+         // Query to get available pesanan for the specified date
     $query = " SELECT 
     b.id AS booking_id, 
     bt.tanggal, 
     bt.start_time, 
     bt.end_time, 
-    av.harga, 
-    av.diskon, 
-    av.total AS available_total, 
+    price.harga, 
+    price.diskon, 
+    price.total AS available_total, 
     l.name AS lapangan_name
 FROM 
     bookings b 
@@ -24,12 +44,17 @@ LEFT JOIN
     available_times av ON bt.lapangan_id = av.lapangan_id 
     AND bt.tanggal = av.tanggal 
     AND (bt.start_time < av.end_time AND bt.end_time > av.start_time) 
+LEFT JOIN ".$table." price ON av.id = price.times_id
 JOIN 
     lapangan l ON b.lapangan_id = l.id
 WHERE 
     b.id = ?;
 
 ";
+
+//    if($count >= 4){
+
+//    }
     $stmt = $conn->prepare($query);
     $stmt->bind_param('i', $booking_id); // Bind the booking ID to the placeholder
 
