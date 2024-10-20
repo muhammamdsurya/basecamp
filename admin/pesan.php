@@ -481,7 +481,7 @@ $lapangan = query("SELECT id, name FROM lapangan");
           fetchAvailableTimes(this.value); // Here 'this' refers to the select element
         });
 
-        function fetchAvailableTimes (lapanganId) {
+        function fetchAvailableTimes(lapanganId) {
           if (lapanganId && lapanganId != 0) { // Check if a valid lapangan is selected
 
             if (lapanganId) {
@@ -605,6 +605,7 @@ $lapangan = query("SELECT id, name FROM lapangan");
                 },
                 error: function(xhr, status, error) {
                   console.error('Error:', error);
+                  console.error('Text:', xhr.responseText);
                 }
               });
             }
@@ -729,12 +730,13 @@ $lapangan = query("SELECT id, name FROM lapangan");
 
               const table = $('#lapanganTable');
               if (response.success) {
+                console.log(response.data);
                 const pesanan = response.data || [];
 
                 pesanan.forEach(row => {
                   const newRow = `
             <tr>
-              <td>${formatDate(row.tanggal_booking)}</td>
+              <td>${formatDate(row.booking_date)}</td>
               <td>${row.name}</td>
               <td>${row.no_hp}</td>
               <td>${row.catatan}</td>
@@ -787,8 +789,6 @@ $lapangan = query("SELECT id, name FROM lapangan");
                   lengthChange: false,
                   autoWidth: true,
 
-
-
                   "dom": 'Bfrtip', // Include Buttons in the DataTable
                   "buttons": [{
                       extend: 'excel',
@@ -812,8 +812,6 @@ $lapangan = query("SELECT id, name FROM lapangan");
 
                         const todayFormatted = yyyy + '-' + mm + '-' + dd;
 
-
-
                         $('#tambahBookingModal #tgl_book').val(todayFormatted); // Set today's date in the input
                         $('#tambahBookingModal').modal('show');
                       },
@@ -826,7 +824,8 @@ $lapangan = query("SELECT id, name FROM lapangan");
               }
             },
             error: function(xhr, status, error) {
-              console.error('AJAX Error:', status, error);
+              console.error('Error:', error);
+              console.error('Text:', xhr.responseText);
             }
           });
         }

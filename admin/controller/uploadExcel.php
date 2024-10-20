@@ -43,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $hargaMember = $row['6'];
                     $diskonMember = $row['7'];
                     $totalMember = $row['8'];
-
                     
                     $date_mysql = explode("/", $date);
                     $date = $date_mysql['2'] . "-" . $date_mysql['0'] . "-" . $date_mysql['1'];
