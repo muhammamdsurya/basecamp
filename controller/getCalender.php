@@ -18,7 +18,7 @@ if (empty($date)) {
 }
 
 // Query to get available times for the specified date
-$query = "SELECT start_time, end_time, harga, status FROM available_times WHERE tanggal = ? AND lapangan_id = ?";
+$query = "SELECT start_time, end_time, status FROM available_times WHERE tanggal = ? AND lapangan_id = ?";
 $stmt = $conn->prepare($query);
 $stmt->bind_param('si', $date, $id);
 $stmt->execute();

@@ -1065,6 +1065,16 @@ $detail = query("SELECT * FROM lapangan WHERE id = $id")[0];
                 }
                 return totalPrice;
             }
+            function calculateDiskonPercent() {
+                
+                // Total price is calculated by summing up the price of each selected time slot
+                var totalPrice =  selectedTimes.reduce((total, slot) => total + slot.diskon || 0, 0);
+
+                if(selectedTimes.length >= 4){
+                    totalPrice = selectedTimes.reduce((total, slot) => total + slot.diskonMember || 0, 0);
+                }
+                return totalPrice;
+            }
 
             function formatTime(timeString) {
                 const date = new Date(`1970-01-01T${timeString}`);
@@ -1082,6 +1092,7 @@ $detail = query("SELECT * FROM lapangan WHERE id = $id")[0];
                 const totalValue = $('#total').val(); //
                 const totalClean = cleanRupiah(totalValue);
                 formData.set('total', totalClean);
+                formData.set('diskon_member', calculateDiskon());
                 // Additional validation for other form fields (example: name and phone number)
                 if (!name) {
                     Swal.fire({
