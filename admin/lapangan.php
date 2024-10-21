@@ -120,11 +120,11 @@ $jadwal = query("SELECT * FROM available_times");
                       </div>
                     </div>
 
-                    <label for="total" class="form-label">Diskon member</label>
+                    <!-- <label for="total" class="form-label">Diskon member</label>
                     <div class="input-group mb-3">
                       <span class="input-group-text">IDR</span>
                       <input type="text" name="diskon_member" class="form-control" id="diskon_member">
-                    </div>
+                    </div> -->
 
                     <div class="mb-3">
                       <label for="description" class="form-label">Keterangan</label>
@@ -195,11 +195,11 @@ $jadwal = query("SELECT * FROM available_times");
                         </div>
                       </div>
 
-                      <label for="total" class="form-label">Diskon member</label>
+                      <!-- <label for="total" class="form-label">Diskon member</label>
                     <div class="input-group mb-3">
                       <span class="input-group-text">IDR</span>
                       <input type="text" name="diskon_edit" class="form-control" id="diskon_edit" value="<?= $row['diskon'];?>">
-                    </div>
+                    </div> -->
 
                       <div class="mb-3">
                         <label for="description" class="form-label">Keterangan</label>
@@ -400,21 +400,21 @@ $jadwal = query("SELECT * FROM available_times");
         }
 
         // Event listener untuk memformat nilai input saat diubah
-        document.getElementById('diskon_member').addEventListener('input', function(e) {
-          // Hilangkan semua karakter selain angka sebelum memformat
-          let value = e.target.value.replace(/[^0-9]/g, '');
+        // document.getElementById('diskon_member').addEventListener('input', function(e) {
+        //   // Hilangkan semua karakter selain angka sebelum memformat
+        //   let value = e.target.value.replace(/[^0-9]/g, '');
 
-          // Format nilai input ke dalam format IDR
-          e.target.value = formatRupiah(value);
-        });
+        //   // Format nilai input ke dalam format IDR
+        //   e.target.value = formatRupiah(value);
+        // });
 
-        document.getElementById('diskon_edit').addEventListener('input', function(e) {
-          // Hilangkan semua karakter selain angka sebelum memformat
-          let value = e.target.value.replace(/[^0-9]/g, '');
+        // document.getElementById('diskon_edit').addEventListener('input', function(e) {
+        //   // Hilangkan semua karakter selain angka sebelum memformat
+        //   let value = e.target.value.replace(/[^0-9]/g, '');
 
-          // Format nilai input ke dalam format IDR
-          e.target.value = formatRupiah(value);
-        });
+        //   // Format nilai input ke dalam format IDR
+        //   e.target.value = formatRupiah(value);
+        // });
 
         function fetchTableLapangan() {
           $.ajax({

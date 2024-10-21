@@ -338,6 +338,9 @@ $lapangan = query("SELECT id, name FROM lapangan");
                       <th scope="col">Harga</th>
                       <th scope="col">Diskon</th>
                       <th scope="col">Total</th>
+                      <th scope="col">Harga Member</th>
+                      <th scope="col">Diskon Member</th>
+                      <th scope="col">Total Member</th>
                       <th scope="col">Tambah</th>
                     </tr>
                   </thead>
@@ -474,7 +477,7 @@ $lapangan = query("SELECT id, name FROM lapangan");
         function updateTotalPrice() {
           const totalPrice = calculatePrice();
           $('#subtotal').val(formatRupiah(totalPrice)); // Update the total price input field
-          $('#total').val(formatRupiah(totalPrice)); // Update the total price input field
+          $('#total').val(formatRupiah(calculateHargaAwal())); // Update the total price input field
         }
 
         $('#lapanganSelect').on('change', function() {
@@ -508,9 +511,12 @@ $lapangan = query("SELECT id, name FROM lapangan");
                 <td>${formatRupiah(item.harga)}</td>
                 <td>${item.diskon}%</td>
                 <td>${formatRupiah(item.total)}</td>
+                <td>${formatRupiah(item.harga_member)}</td>
+                <td>${item.diskon_member}%</td>
+                <td>${formatRupiah(item.total_member)}</td>
     <td>
   <div class="form-check custom-checkbox">
-    <input type="checkbox" class="form-check-input order-checkbox" data-id="${item.lapangan_id}" data-tanggal="${item.tanggal}" data-start="${item.start_time}" data-end="${item.end_time}" data-harga="${item.harga}" data-diskon="${item.diskon}" data-total="${item.total}">
+    <input type="checkbox" class="form-check-input order-checkbox" data-id="${item.lapangan_id}" data-tanggal="${item.tanggal}" data-start="${item.start_time}" data-end="${item.end_time}" data-harga="${item.harga}" data-diskon="${item.diskon}" data-total="${item.total}" data-harga-member="${item.harga_member}" data-diskon-member="${item.diskon_member}" data-total-member="${item.total_member}" >
   </div>
 </td>
 
@@ -604,6 +610,8 @@ $lapangan = query("SELECT id, name FROM lapangan");
                   }
                 },
                 error: function(xhr, status, error) {
+                  console.log(xhr);
+                  
                   console.error('Error:', error);
                 }
               });
@@ -620,7 +628,10 @@ $lapangan = query("SELECT id, name FROM lapangan");
             end: $(this).data('end'),
             harga: $(this).data('harga'),
             diskon: $(this).data('diskon'),
-            total: $(this).data('total')
+            total: $(this).data('total'),
+            hargaMember: $(this).data('harga-member'),
+            diskonMember: $(this).data('diskon-member'),
+            totalMember: $(this).data('total-member')
           };
 
           if ($(this).is(':checked')) {
@@ -628,7 +639,7 @@ $lapangan = query("SELECT id, name FROM lapangan");
             console.log(lapanganSelect);
             // Tambahkan data ke array jika dicentang
             selectedBookings.push(data);
-            $('#total').val(formatRupiah(calculatePrice()));
+            $('#total').val(formatRupiah(calculateHargaAwal()));
             $('#subtotal').val(formatRupiah(calculatePrice()));
             // Cek apakah pesanan yang dipilih minimal 4
 
@@ -657,48 +668,11 @@ $lapangan = query("SELECT id, name FROM lapangan");
             }
           }
 
-          if (selectedBookings.length >= 4) {
-            // Fetch diskon via AJAX
-            const id = lapanganSelect; // Gunakan ID booking untuk request diskon
-            $.ajax({
-              url: '../controller/getDiskon.php',
-              type: 'GET',
-              data: {
-                id: id
-              },
-              dataType: 'json',
-              success: function(response) {
-                console.log(response);
-                if (response.success) {
-                  const diskon = response.diskon;
-
-                  // Update diskon di input
-                  $('#tambahBookingModal #diskon').val(formatRupiah(diskon));
-
-                  // Update harga total setelah diskon
-                  totalPrice = calculatePrice() - diskon;
-
-                  // Pastikan totalPrice tidak negatif
-                  if (totalPrice < 0) totalPrice = 0;
-
-                  // Tampilkan harga total yang sudah didiskon
-                  $('#tambahBookingModal #subtotal').val(`${formatRupiah(totalPrice)}`);
-                } else {
-                  totalPrice = calculatePrice() - diskon;
-
-                }
-              },
-              error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error);
-                console.error('Response Text:', xhr.responseText);
-              }
-            });
-          } else {
+        
+          $('#tambahBookingModal #diskon').val(formatRupiah(calculateDiskon()));
             // Jika kurang dari 4 pesanan, reset diskon dan tampilkan pesan
-            $('#tambahBookingModal #diskon').val(0);
-            $('#tambahBookingModal #subtotal').val(formatRupiah(calculatePrice()));
+            // $('#tambahBookingModal #subtotal').val(formatRupiah(calculatePrice()));
 
-          }
         });
 
 
@@ -1128,7 +1102,7 @@ $lapangan = query("SELECT id, name FROM lapangan");
           }
 
           // Tambahkan nominal yang sudah dibersihkan ke dalam FormData
-          formData.set('diskon_member', cleanedDiskon);
+          formData.set('diskon_member', calculateDiskon());
           formData.set('nominal', cleanedNominal);
           formData.set('subTotal', cleanedTotal);
 
@@ -1157,19 +1131,30 @@ $lapangan = query("SELECT id, name FROM lapangan");
             contentType: false,
             processData: false,
             success: function(response) {
-              Swal.fire(
-                'Yess!',
-                'Berhasil menambahkan data!.',
-                'success'
-              ).then(() => {
+              if (response.success === false) {
+                            // Display SweetAlert if there's an error
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: response.message, // Use the error message returned from the server
+                            });
+                        } else{
+                          Swal.fire(
+                            'Yess!',
+                            'Berhasil menambahkan data!.',
+                            'success'
+                          ).then(() => {
 
-                const lapanganId = $('#lapanganSelect').val();
-                console.log(lapanganId);
-                fetchAvailableTimes(lapanganId);
-                $('#bayar-form')[0].reset();
+                            const lapanganId = $('#lapanganSelect').val();
+                            console.log(lapanganId);
+                            fetchAvailableTimes(lapanganId);
+                            $('#bayar-form')[0].reset();
 
-                fetchTableData();
-              });
+                            fetchTableData();
+                          });
+                        }
+              
+         
 
             },
             error: function(xhr, status, error) {
@@ -1278,12 +1263,48 @@ $lapangan = query("SELECT id, name FROM lapangan");
         });
 
 
-
         function calculatePrice() {
-          // Total price is calculated by summing up the price of each selected time slot
-          const totalPrice = selectedBookings.reduce((total, slot) => total + slot.total || 0, 0);
-          return totalPrice;
-        }
+                
+                // Total price is calculated by summing up the price of each selected time slot
+                var totalPrice = selectedBookings.reduce((total, slot) => total + slot.total || 0, 0);
+
+                if(selectedBookings.length >= 4){
+                     totalPrice = selectedBookings.reduce((totalMember, slot) => totalMember + slot.totalMember || 0, 0);
+                }
+                return totalPrice;
+            }
+
+
+        function calculateHargaAwal() {
+                
+                // Total price is calculated by summing up the price of each selected time slot
+                var totalPrice = selectedBookings.reduce((price, slot) => price + slot.harga || 0, 0);
+
+                if(selectedBookings.length >= 4){
+                     totalPrice = selectedBookings.reduce((priceMember, slot) => priceMember + slot.hargaMember || 0, 0);
+                }
+                return totalPrice;
+            }
+            function calculateDiskon() {
+                
+                // Total price is calculated by summing up the price of each selected time slot
+                var totalPrice = selectedBookings.reduce((total, slot) => total + ( slot.harga - slot.total || 0), 0);
+
+                if(selectedBookings.length >= 4){
+                    totalPrice = selectedBookings.reduce((total, slot) => total + ( slot.hargaMember - slot.totalMember || 0), 0);
+                }
+                return totalPrice;
+            }
+            function calculateDiskonPercent() {
+                
+                // Total price is calculated by summing up the price of each selected time slot
+                var totalPrice =  selectedBookings.reduce((total, slot) => total + slot.diskon || 0, 0);
+
+                if(selectedBookings.length >= 4){
+                    totalPrice = selectedBookings.reduce((total, slot) => total + slot.diskonMember || 0, 0);
+                }
+                return totalPrice;
+            }
 
       });
     </script>
