@@ -972,7 +972,7 @@ $detail = query("SELECT * FROM lapangan WHERE id = $id")[0];
                     const startHourInt = parseInt(startHour.split(':')[0], 10);
                     const endHourInt = parseInt(endHour.split(':')[0], 10);
                     // Check if start or end time falls within morning or evening category
-                    if ((startHourInt >= 8 && startHourInt < 16) || (endHourInt > 8 && endHourInt <= 16)) {
+                    if ((startHourInt >= 6 && startHourInt < 16) || (endHourInt > 8 && endHourInt <= 16)) {
                         morningTimes.push({
                             date: timeSlot.tanggal,
                             startTime: timeSlot.start_time,

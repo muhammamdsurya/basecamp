@@ -205,7 +205,7 @@ $html .= '
             </td>
             
             <td style="text-align: right; vertical-align: top;">
-            <p class="subtotal">Diskon Member: Rp' . number_format($bookingData['diskon_member'], 0, ',', '.') . '</p> <br>
+            <p class="subtotal">Diskon: Rp' . number_format($bookingData['diskon_member'], 0, ',', '.') . '</p> <br>
                 <p class="subtotal">Total Pembayaran: Rp' . number_format($bookingData['total'], 0, ',', '.') . '</p>
             </td>
         </tr>
